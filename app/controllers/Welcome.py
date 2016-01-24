@@ -1,27 +1,65 @@
-"""
-    Sample Controller File
-
-    A Controller should be in charge of responding to a request.
-    Load models to interact with the database and load views to render them to the client.
-
-    Create a controller using this template
-"""
 from system.core.controller import *
 
 class Welcome(Controller):
     def __init__(self, action):
         super(Welcome, self).__init__(action)
-        """
-            This is an example of loading a model.
-            Every controller has access to the load_model method.
+        self.load_model('WelcomeModel')
 
-            self.load_model('WelcomeModel')
-        """
 
-    """ This is an example of a controller method that will load a view for the client """
+
     def index(self):
-        """ 
-        A loaded model is accessible through the models attribute 
-        self.models['WelcomeModel'].get_all_users()
-        """
         return self.load_view('index.html')
+
+
+
+
+    def register(self):
+        user_info = {
+        'name' : request.form['name'],
+        'alias' : request.form['alias'],
+        'email' : request.form['email'],
+        'password' : request.form['password'],
+        'confirm_password' : request.form['confirm_password']
+        }
+
+        create_status = self.models['WelcomeModel'].register_user(user_info)
+
+        if create_status['status'] == True:
+            session['id'] = create_status['user']['id']
+            return redirect('/success')
+        else:
+            for message in create_status['errors']:
+                flash(message, 'regis_errors')
+            return redirect('/')
+
+
+
+
+    def login(self):
+        user_info = {
+        'email' : request.form['email'],
+        'password' : request.form['password']
+        }
+
+        status = self.models['WelcomeModel'].login_user(user_info)
+
+        if status['status'] == False:
+            for message in status['errors']:
+                flash(message, 'Login_errors')
+            return redirect('/')
+        else:
+            session['name'] = status['user']['name']
+            return redirect('/success')
+
+
+
+
+
+    def success(self):
+        return self.load_view('success.html')
+
+
+    def logout(self):
+        session.clear()
+        return redirect('/')
+
